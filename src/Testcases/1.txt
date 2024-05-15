@@ -1,0 +1,6 @@
+public class EsoTilin extends EteSech implements ElPepe, Mario, Hola {
+    private static final int miparametro = 5;
+    public static void main() {
+        int
+    }
+}

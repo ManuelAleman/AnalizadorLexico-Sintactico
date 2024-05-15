@@ -1,36 +1,30 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
-public class Interface extends JFrame implements ActionListener {
+public class Interface extends JFrame implements ActionListener, KeyListener {
+
     private AnalizadorLexico analizadorLexico = new AnalizadorLexico();
 
-    private JButton btnOpen;
+    private AnalizadorSintactico analizadorSintactico = new AnalizadorSintactico();
+
+    private JButton btnOpen, btnLexico, btnSintactico;
 
     private JFileChooser fileChooser;
-    private JButton btnLexico;
 
-    private JButton btnSintactico;
-    private JLabel lblLexicoStatus;
+    private JLabel lblLexicoStatus, lblSintacticoStatus, lblConsoleInfo;
 
-    private JLabel lblSintacticoStatus;
+    private JTextArea txtCode, txtTablaSimbolos, txtTokens;
 
-    private JTextArea txtCode;
-
-    private JLabel lblConsoleInfo;
-
-    private JTextArea txtTablaSimbolos;
+    private int idBotonActual;
 
     public Interface() {
         super("Automatas");
 
-        setSize(1200, 1000);
+        setSize(1500, 1000);
         getContentPane().setBackground(new Color(251, 254, 187));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -39,6 +33,7 @@ public class Interface extends JFrame implements ActionListener {
         fileChooser = new JFileChooser();
         makeInterface();
         addListeners();
+        idBotonActual = -1;
         setVisible(true);
     }
 
@@ -50,7 +45,6 @@ public class Interface extends JFrame implements ActionListener {
         codeArea.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         add(codeArea);
 
-
         JLabel lblCode = new JLabel("Codigo");
         lblCode.setFont(new Font("Arial", Font.PLAIN, 20));
         lblCode.setHorizontalAlignment(SwingConstants.CENTER);
@@ -61,14 +55,12 @@ public class Interface extends JFrame implements ActionListener {
         txtCode.setBounds(10, 50, 780, 540);
         txtCode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-
         JScrollPane scroll = new JScrollPane(txtCode);
         scroll.setBounds(10, 50, 780, 540);
         codeArea.add(scroll);
 
-
         btnOpen = new JButton("Abrir Archivo");
-        btnOpen.setBounds(950, 30, 150, 50);
+        btnOpen.setBounds(1090, 30, 150, 50);
         btnOpen.setBackground(new Color(192, 199, 200));
         btnOpen.setForeground(Color.BLACK);
         btnOpen.setFont(new Font("Tahoma", Font.BOLD, 15));
@@ -76,7 +68,7 @@ public class Interface extends JFrame implements ActionListener {
         add(btnOpen);
 
         btnLexico = new JButton("Lexico");
-        btnLexico.setBounds(950, 130, 150, 50);
+        btnLexico.setBounds(1090, 130, 150, 50);
         btnLexico.setBackground(new Color(192, 199, 200));
         btnLexico.setForeground(Color.BLACK);
         btnLexico.setFont(new Font("Tahoma", Font.BOLD, 15));
@@ -84,21 +76,22 @@ public class Interface extends JFrame implements ActionListener {
         add(btnLexico);
 
         lblLexicoStatus = new JLabel();
-        lblLexicoStatus.setBounds(1120, 135, 40, 40);
+        lblLexicoStatus.setBounds(1260, 135, 40, 40);
         lblLexicoStatus.setOpaque(true);
         lblLexicoStatus.setBackground(Color.GRAY);
         add(lblLexicoStatus);
 
         btnSintactico = new JButton("Sintactico");
-        btnSintactico.setBounds(950, 200, 150, 50);
+        btnSintactico.setBounds(1090, 200, 150, 50);
         btnSintactico.setBackground(new Color(192, 199, 200));
         btnSintactico.setForeground(Color.BLACK);
         btnSintactico.setFont(new Font("Tahoma", Font.BOLD, 15));
         btnSintactico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        btnSintactico.setEnabled(false);
         add(btnSintactico);
 
         lblSintacticoStatus = new JLabel();
-        lblSintacticoStatus.setBounds(1120, 205, 40, 40);
+        lblSintacticoStatus.setBounds(1260, 205, 40, 40);
         lblSintacticoStatus.setOpaque(true);
         lblSintacticoStatus.setBackground(Color.GRAY);
         add(lblSintacticoStatus);
@@ -122,15 +115,36 @@ public class Interface extends JFrame implements ActionListener {
         lblConsoleInfo.setOpaque(true);
         lblConsoleInfo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
-
         JScrollPane scrollConsole = new JScrollPane(lblConsoleInfo);
         scrollConsole.setBounds(10, 50, 780, 240);
         console.add(scrollConsole);
 
+        JPanel tokensPanel = new JPanel();
+        tokensPanel.setLayout(null);
+        tokensPanel.setBounds(850, 300, 300, 650);
+        tokensPanel.setBackground(new Color(252, 206, 159));
+        tokensPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        add(tokensPanel);
+
+        JLabel lblTokens = new JLabel("Tokens");
+        lblTokens.setFont(new Font("Arial", Font.PLAIN, 20));
+        lblTokens.setHorizontalAlignment(SwingConstants.CENTER);
+        lblTokens.setBounds(0, 0, 300, 50);
+        tokensPanel.add(lblTokens);
+
+        txtTokens = new JTextArea();
+        txtTokens.setBounds(10, 50, 280, 590);
+        txtTokens.setBackground(Color.WHITE);
+        txtTokens.setOpaque(true);
+        txtTokens.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+        JScrollPane scrollTokens = new JScrollPane(txtTokens);
+        scrollTokens.setBounds(10, 50, 280, 590);
+        tokensPanel.add(scrollTokens);
 
         JPanel tree = new JPanel();
         tree.setLayout(null);
-        tree.setBounds(850, 300, 300, 650);
+        tree.setBounds(1170, 300, 300, 650);
         tree.setBackground(new Color(197, 253, 167));
         tree.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         add(tree);
@@ -156,6 +170,7 @@ public class Interface extends JFrame implements ActionListener {
         btnOpen.addActionListener(this);
         btnLexico.addActionListener(this);
         btnSintactico.addActionListener(this);
+        txtCode.addKeyListener(this);
     }
 
     @Override
@@ -168,6 +183,10 @@ public class Interface extends JFrame implements ActionListener {
                 try {
                     String code = FileReader.readFile(file);
                     txtCode.setText(code);
+                    idBotonActual = -1;
+                    lblLexicoStatus.setBackground(Color.GRAY);
+                    lblSintacticoStatus.setBackground(Color.GRAY);
+                    btnSintactico.setEnabled(false);
                 } catch (FileNotFoundException ex) {
                     txtCode.setText("Error al leer el archivo");
                     throw new RuntimeException(ex);
@@ -175,15 +194,49 @@ public class Interface extends JFrame implements ActionListener {
             }
         }
         if (e.getSource() == btnLexico) {
-            ArrayList<Token> tokensLeidos = analizadorLexico.analizar(txtCode.getText());
-            StringBuilder sb = new StringBuilder();
-            for (Token token : tokensLeidos) {
-                sb.append(token);
-                sb.append("\n");
+            analizadorLexico.analizar(txtCode.getText());
+            txtTokens.setText(analizadorLexico.obtenerStringTokens());
+            txtTablaSimbolos.setText(analizadorLexico.obtenerStringTablaSimbolos());
+            idBotonActual = 0;
+            if(analizadorLexico.exito()) {
+                lblLexicoStatus.setBackground(Color.green);
+                btnSintactico.setEnabled(true);
+            }else {
+                lblLexicoStatus.setBackground(Color.red);
             }
-            txtTablaSimbolos.setText(sb.toString());
             revalidate();
             repaint();
         }
+        if(e.getSource() == btnSintactico) {
+            if(idBotonActual != 0) {
+                return;
+            }
+            if(analizadorSintactico.analizar(analizadorLexico.getTokens())) {
+                lblSintacticoStatus.setBackground(Color.green);
+            }else {
+                lblSintacticoStatus.setBackground(Color.red);
+                btnSintactico.setEnabled(false);
+            }
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        lblLexicoStatus.setBackground(Color.GRAY);
+        idBotonActual = -1;
+        btnSintactico.setEnabled(false);
+        lblSintacticoStatus.setBackground(Color.GRAY);
+        revalidate();
+        repaint();
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }
