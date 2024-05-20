@@ -78,8 +78,7 @@ public class AnalizadorSintactico {
 
     private boolean cuerpoClase(int i) {
         if (declaracionAtributo(i) || declaracionMetodo(i)) {
-            i = siguienteIndice;
-            cuerpoClase(i);
+            cuerpoClase(siguienteIndice);
             return true;
         }
         if (evaluar(i, Token.RIGHT_CURLY_BRACE)) {
@@ -109,7 +108,7 @@ public class AnalizadorSintactico {
         if (evaluar(i, Token.FINAL)) {
             i++;
         }
-//        System.out.println(tokens.get(i).name());
+
         if (!tipoRetorno(i) || !evaluar(++i, Token.IDENTIFIER) || !evaluar(++i, Token.LEFT_PARENTHESIS)) {
             return false;
         }
@@ -119,9 +118,7 @@ public class AnalizadorSintactico {
         if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !cuerpoMetodo(++i)) {
             return false;
         }
-        i = siguienteIndice;
-        siguienteIndice = i + 1;
-        return evaluar(i, Token.RIGHT_CURLY_BRACE);
+        return evaluar(siguienteIndice++, Token.RIGHT_CURLY_BRACE);
     }
 
     private boolean modificadorAcceso(int i) {
@@ -129,14 +126,23 @@ public class AnalizadorSintactico {
     }
 
     private boolean cuerpoMetodo(int i) {
-        if (declaracionVariable(i) || asignarValoraVariable(i) || estructuraCondicional(i) ||
-                estructuraRepetitiva(i) || salto(i)) {
-            i = siguienteIndice;
-            return cuerpoMetodo(i);
+        if (evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+            siguienteIndice = i;
+            return true;
         }
-        siguienteIndice = i;
-//        System.out.println(evaluar(i,Token.RIGHT_CURLY_BRACE));
-        return evaluar(i,Token.RIGHT_CURLY_BRACE);
+        return listaInstrucciones(i);
+    }
+
+    private boolean listaInstrucciones(int i) {
+        if (!declaracionVariable(i) && !asignarValoraVariable(i) && !estructuraCondicional(i) &&
+                !estructuraRepetitiva(i) && !salto(i)) {
+            return false;
+        }
+        i = siguienteIndice;
+        if (!listaInstrucciones(siguienteIndice)) {
+            siguienteIndice = i;
+        }
+        return true;
     }
 
     private boolean salto(int i) {
@@ -152,7 +158,7 @@ public class AnalizadorSintactico {
             siguienteIndice = i + 1;
             return true;
         }
-        if (valor(++i)) {
+        if (literal(++i)) {
             if (!evaluar(++i, Token.SEMICOLON)) {
                 return false;
             }
@@ -170,7 +176,6 @@ public class AnalizadorSintactico {
         if (evaluar(i, Token.COMMA)) {
             return listaParametros(++i);
         }
-        siguienteIndice = i + 1;
         return true;
     }
 
@@ -191,9 +196,15 @@ public class AnalizadorSintactico {
         if (!evaluar(++i, Token.IDENTIFIER)){
             return false;
         }
-        i++;
+        
+        if (asignarValoraVariable(i)) {
+            i = siguienteIndice;
+        } else {
+            i++;
+        }
+
         siguienteIndice = i + 1;
-        return evaluar(i, Token.SEMICOLON) || asignarValoraVariable(i - 1);
+        return evaluar(i, Token.SEMICOLON);
     }
 
     public boolean asignarValoraVariable(int i){
@@ -201,26 +212,12 @@ public class AnalizadorSintactico {
             return false;
         }
 
-        if(!evaluar(++i,Token.ASSIGNMENT)){
+        if(!operadorAsignacion(++i)){
             return false;
         }
 
-        boolean b1 = operacionAritmetica(++i) || expresion(i), b2 = valor(i);
-        if (!b1 && !b2){
-            return false;
-        }
+        // TODO : EVALUAR OPERACION
 
-        if (b1) {
-            i = siguienteIndice;
-        } else {
-            i++;
-        }
-
-        if (!evaluar(i, Token.SEMICOLON)) {
-            return false;
-        }
-
-        siguienteIndice = i + 1;
         return true;
     }
 
@@ -229,7 +226,7 @@ public class AnalizadorSintactico {
     }
 
     private boolean valorCondicional(int i){
-        return evaluar(i, Token.IDENTIFIER) || valor(i) || operacionAritmetica(i);
+        return evaluar(i, Token.IDENTIFIER) || literal(i) || operacionAritmetica(i);
     }
 
     private boolean condicion(int i) { // 5 + 3 < x
@@ -254,12 +251,6 @@ public class AnalizadorSintactico {
         if(!condicion(i)){
             return false;
         }
-
-//        if(!operadorLogico(++i)){
-//            return false;
-//        }
-
-
 
         if(operadorLogico(++i)) {
             return listaCondiciones(++i);
@@ -292,7 +283,7 @@ public class AnalizadorSintactico {
             return false;
         }
 
-        if(!cuerpoMetodo(++i)){
+        if(!listaInstrucciones(++i)){
             return false;
         }
 
@@ -317,7 +308,7 @@ public class AnalizadorSintactico {
             return false;
         }
 
-        if (!cuerpoMetodo(++i)){
+        if (!listaInstrucciones(++i)){
             return false;
         }
         i = siguienteIndice;
@@ -343,7 +334,7 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || evaluar(++i, Token.LEFT_CURLY_BRACE) || !cuerpoMetodo(++i)) {
+        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
             return false;
         }
         i = siguienteIndice;
@@ -370,7 +361,7 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        if (!evaluar(i, Token.LEFT_CURLY_BRACE) || !cuerpoMetodo(++i)) {
+        if (!evaluar(i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
             return false;
         }
         i = siguienteIndice;
@@ -382,7 +373,7 @@ public class AnalizadorSintactico {
     }
 
     private boolean declaracionDoWhile(int i){
-        if (!evaluar(i, Token.DO) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !cuerpoMetodo(++i)) {
+        if (!evaluar(i, Token.DO) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
             return false;
         }
         i = siguienteIndice;
@@ -407,10 +398,6 @@ public class AnalizadorSintactico {
         }
         siguienteIndice = i + 1;
         return true;
-    }
-
-    public boolean valor(int i){
-        return literal(i) || constante(i);
     }
 
     public boolean literal(int i){
@@ -461,48 +448,11 @@ public class AnalizadorSintactico {
         return evaluar(i, Token.VOID) || tipoDato(i);
     }
 
+    private boolean operacionAritmetica(int i) {
+
+    }
+
     private boolean evaluar(int i, Token token) {
         return i < tokens.size() && tokens.get(i).equals(token);
-    }
-
-    private boolean operacionAritmetica(int i){
-//        System.out.println("OA " + tokens.get(i).name());
-        if (!numero(i)){
-            return false;
-        }
-        return continuaOperacion(++i);
-    }
-
-    private boolean continuaOperacion(int i) {
-//        System.out.println("CO " + tokens.get(i).name());
-        if (!operadorAritmetico(i)){
-            return false;
-        }
-        if (numero(++i)) {
-            if (!operacionAritmetica(i)) {
-                siguienteIndice = i + 1;
-            }
-            return true;
-        }
-
-        return expresion(i);
-    }
-
-    private boolean expresion(int i){
-//        System.out.println("EX " + tokens.get(i).name());
-        if(!evaluar(i, Token.LEFT_PARENTHESIS)){
-            return false;
-        }
-        if (!operacionAritmetica(++i)) {
-            return false;
-        }
-        i = siguienteIndice;
-//        System.out.println("SIG " + tokens.get(i).name());
-        if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
-            return false;
-        }
-        siguienteIndice = i + 1;
-        continuaOperacion(++i);
-        return true;
     }
 }
