@@ -99,7 +99,7 @@ public class AnalizadorLexico {
             if (esIdentificador(tokens.get(i).toString())) {
                 if (i - 1 >= 0 && tokens.get(i - 1) == Token.CLASS) {
                     tablaSimbolos.put(cadenas.get(i), Token.CLASSNAME);
-                } else if (i + 1 < tokens.size() && tokens.get(i + 1) == Token.LEFT_PARENTHESIS) {
+                } else if (i + 1 < tokens.size() && tokens.get(i) == Token.IDENTIFIER && tokens.get(i + 1) == Token.LEFT_PARENTHESIS) {
                     tablaSimbolos.put(cadenas.get(i), Token.METHOD);
                 } else if (i - 1 >= 0 && esTipoDeDato(tokens.get(i - 1))) {
                     tablaSimbolos.put(cadenas.get(i), Token.VARIABLE);

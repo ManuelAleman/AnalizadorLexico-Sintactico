@@ -109,7 +109,7 @@ public class AnalizadorSintactico {
         if (evaluar(i, Token.FINAL)) {
             i++;
         }
-        System.out.println(tokens.get(i).name());
+//        System.out.println(tokens.get(i).name());
         if (!tipoRetorno(i) || !evaluar(++i, Token.IDENTIFIER) || !evaluar(++i, Token.LEFT_PARENTHESIS)) {
             return false;
         }
@@ -135,7 +135,7 @@ public class AnalizadorSintactico {
             return cuerpoMetodo(i);
         }
         siguienteIndice = i;
-        System.out.println(evaluar(i,Token.RIGHT_CURLY_BRACE));
+//        System.out.println(evaluar(i,Token.RIGHT_CURLY_BRACE));
         return evaluar(i,Token.RIGHT_CURLY_BRACE);
     }
 
@@ -255,11 +255,19 @@ public class AnalizadorSintactico {
             return false;
         }
 
-        if(!operadorLogico(++i)){
-            return false;
+//        if(!operadorLogico(++i)){
+//            return false;
+//        }
+
+
+
+        if(operadorLogico(++i)) {
+            return listaCondiciones(++i);
         }
 
-        return listaCondiciones(++i);
+        siguienteIndice = i + 1;
+
+        return true;
     }
 
     private boolean declaracionIf(int i){
@@ -458,7 +466,7 @@ public class AnalizadorSintactico {
     }
 
     private boolean operacionAritmetica(int i){
-        System.out.println("OA " + tokens.get(i).name());
+//        System.out.println("OA " + tokens.get(i).name());
         if (!numero(i)){
             return false;
         }
@@ -466,7 +474,7 @@ public class AnalizadorSintactico {
     }
 
     private boolean continuaOperacion(int i) {
-        System.out.println("CO " + tokens.get(i).name());
+//        System.out.println("CO " + tokens.get(i).name());
         if (!operadorAritmetico(i)){
             return false;
         }
@@ -481,7 +489,7 @@ public class AnalizadorSintactico {
     }
 
     private boolean expresion(int i){
-        System.out.println("EX " + tokens.get(i).name());
+//        System.out.println("EX " + tokens.get(i).name());
         if(!evaluar(i, Token.LEFT_PARENTHESIS)){
             return false;
         }
@@ -489,7 +497,7 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        System.out.println("SIG " + tokens.get(i).name());
+//        System.out.println("SIG " + tokens.get(i).name());
         if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
             return false;
         }
