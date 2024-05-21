@@ -78,12 +78,12 @@ public class AnalizadorSintactico {
     }
 
     private boolean cuerpoClase(int i) {
-        if (declaracionAtributo(i) || declaracionMetodo(i)) {
-            cuerpoClase(siguienteIndice);
-            return true;
-        }
         if (evaluar(i, Token.RIGHT_CURLY_BRACE)) {
             siguienteIndice = i;
+            return true;
+        }
+        if (declaracionAtributo(i) || declaracionMetodo(i)) {
+            cuerpoClase(siguienteIndice);
             return true;
         }
         return false;
@@ -116,7 +116,7 @@ public class AnalizadorSintactico {
         if (listaParametros(++i)) {
             i = siguienteIndice;
         }
-        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !cuerpoMetodo(++i)) {
+        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
             return false;
         }
         return evaluar(siguienteIndice++, Token.RIGHT_CURLY_BRACE);
@@ -126,17 +126,13 @@ public class AnalizadorSintactico {
         return evaluar(i, Token.PUBLIC) || evaluar(i, Token.PRIVATE) || evaluar(i, Token.PROTECTED);
     }
 
-    private boolean cuerpoMetodo(int i) {
+    private boolean listaInstrucciones(int i) {
         if (evaluar(i, Token.RIGHT_CURLY_BRACE)) {
             siguienteIndice = i;
             return true;
         }
-        return listaInstrucciones(i);
-    }
-
-    private boolean listaInstrucciones(int i) {
         if (!declaracionVariable(i) && !asignacionValorVariable(i) && !estructuraCondicional(i) &&
-                !estructuraRepetitiva(i) && !salto(i)) {
+                !estructuraRepetitiva(i) && !salto(i) && !llamadaMetodo(i)) {
             return false;
         }
         if (asignacionValorVariable(i)) {
@@ -153,6 +149,10 @@ public class AnalizadorSintactico {
         return true;
     }
 
+    private boolean llamadaMetodo(int i) {
+        return false;
+    }
+
     private boolean salto(int i) {
         siguienteIndice = i + 1;
         return evaluar(i, Token.BREAK) || evaluar(i, Token.CONTINUE) || retorno(i);
@@ -166,7 +166,7 @@ public class AnalizadorSintactico {
             siguienteIndice = i + 1;
             return true;
         }
-        if (literal(++i)) {
+        if (literal(i) || evaluar(i, Token.IDENTIFIER)) {
             if (!evaluar(++i, Token.SEMICOLON)) {
                 return false;
             }
@@ -204,7 +204,7 @@ public class AnalizadorSintactico {
         if (!evaluar(++i, Token.IDENTIFIER)){
             return false;
         }
-        
+
         if (asignacionValorVariable(i)) {
             i = siguienteIndice;
         } else {
