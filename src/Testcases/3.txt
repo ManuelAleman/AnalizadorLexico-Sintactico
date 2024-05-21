@@ -1,0 +1,20 @@
+public class Foo extends Doo {
+    public static void main(string args) {
+	    int a = 5+3*(5/2)*3;
+	    int b = 3;
+	    if (a < b) {
+	        x = 5;
+	    }
+    }
+}
+public class Clase2 extends Hola {
+	int x = 3;
+	public int print(string s) {
+		y = z;
+		b = 9;
+	}
+	string h = "hola mundo";
+	public void main() {
+		x = y;
+	}
+}

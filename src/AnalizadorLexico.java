@@ -3,12 +3,15 @@ import java.util.*;
 public class AnalizadorLexico {
     private final HashMap<String, Token> mapaTokens;
     private final HashMap<String, Simbolo> tablaSimbolos;
+    private final HashMap<String, ArrayList<String>> jerarquiaSimbolos;
     private ArrayList<Token> tokens;
     private ArrayList<Par> pares;
+    private ArrayList<String> clases;
 
     public AnalizadorLexico() {
         mapaTokens = new HashMap<>();
         tablaSimbolos = new HashMap<>();
+        jerarquiaSimbolos = new HashMap<>();
 
         mapaTokens.put("class", Token.CLASS);
         mapaTokens.put("extends", Token.EXTENDS);
@@ -45,6 +48,7 @@ public class AnalizadorLexico {
         mapaTokens.put(";", Token.SEMICOLON);
         mapaTokens.put(":", Token.COLON);
         mapaTokens.put("\"", Token.QUOTATION_MARKS);
+        mapaTokens.put(".", Token.DOT);
 
         // Operadores aritmeticos
         mapaTokens.put("+", Token.PLUS);
@@ -96,45 +100,12 @@ public class AnalizadorLexico {
         mapaTokens.put("null", Token.NULL);
     }
 
-    private void generarTablaDeSimbolos(ArrayList<Token> tokens, ArrayList<String> cadenas) {
-        for (int i = 0; i < tokens.size(); i++) {
-            if (esIdentificador(tokens.get(i).toString())) {
-                if (i - 1 >= 0 && tokens.get(i - 1) == Token.CLASS) {
-                    tablaSimbolos.put(cadenas.get(i), new Simbolo(Token.CLASSNAME, Token.NONE));
-                } else if (i + 1 < tokens.size() && tokens.get(i) == Token.IDENTIFIER && tokens.get(i + 1) == Token.LEFT_PARENTHESIS) {
-                    tablaSimbolos.put(cadenas.get(i), new Simbolo(Token.METHOD, tokens.get(i - 1)));
-                } else if (i - 1 >= 0 && esTipoDeDato(tokens.get(i - 1))) {
-                    tablaSimbolos.put(cadenas.get(i), new Simbolo(Token.VARIABLE, tokens.get(i - 1)));
-                }
-            }
-        }
-    }
-
-    private boolean esTipoDeDato(Token token) {
-        return token == Token.BOOLEAN || token == Token.INT || token == Token.DOUBLE || token == Token.FLOAT
-                || token == Token.CHAR || token == Token.STRING || token == Token.SHORT || token == Token.LONG
-                || token == Token.BYTE;
-    }
-
-    private int esCaracterDeSeparacion(char c) {
-        if(" \t\n".indexOf(c) != -1) {
-            return 0;
-        }
-        if("(){},;:".indexOf(c) != -1) {
-            return 1;
-        }
-        if ("+-*/%<>!=".indexOf(c) != -1)
-            return 2;
-        if ("&|".indexOf(c) != -1)
-            return 3;
-        return -1;
-    }
-
     public void analizar(String codigo) {
         int filaActual = 1, columnaActual = 0;
         codigo += " ";
         tokens = new ArrayList<>();
         pares = new ArrayList<>();
+        clases = new ArrayList<>();
         ArrayList<String> cadenas = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean comillasAbiertas = false;
@@ -152,7 +123,7 @@ public class AnalizadorLexico {
                 columnaActual = 0;
             }
 
-            if (tipoCaracterDeSeparacion == -1 || (comillasAbiertas && i < codigo.length() - 1 )) {
+            if (tipoCaracterDeSeparacion == -1 || (comillasAbiertas && i < codigo.length() - 1)) {
                 sb.append(codigo.charAt(i));
                 continue;
             }
@@ -216,7 +187,67 @@ public class AnalizadorLexico {
             return;
         }
 
-        generarTablaDeSimbolos(tokens, cadenas);
+        generarTablaDeSimbolos(cadenas);
+    }
+
+    private void generarTablaDeSimbolos(ArrayList<String> cadenas) {
+        tablaSimbolos.clear();
+        jerarquiaSimbolos.clear();
+        String claseActual = "", metodoActual = "", claseMetodo = "";
+        clases = new ArrayList<>();
+        boolean enMetodo = false;
+        for (int i = 0; i < tokens.size(); i++) {
+            if (tokens.get(i) == Token.RIGHT_CURLY_BRACE) {
+                enMetodo = false;
+            }
+            if (esIdentificador(tokens.get(i).toString())) {
+                if (i - 1 >= 0 && tokens.get(i - 1) == Token.CLASS) {
+                    claseActual = cadenas.get(i);
+                    clases.add(claseActual);
+                    tablaSimbolos.put(claseActual, new Simbolo(Token.CLASSNAME, Token.NONE));
+                    jerarquiaSimbolos.putIfAbsent(claseActual, new ArrayList<>());
+                    continue;
+                }
+                if (i - 1 >= 0 && i + 1 < tokens.size() && esTipoRetorno(tokens.get(i - 1)) && tokens.get(i) == Token.IDENTIFIER && tokens.get(i + 1) == Token.LEFT_PARENTHESIS) {
+                    metodoActual = cadenas.get(i);
+                    claseMetodo = claseActual + "." + metodoActual;
+                    tablaSimbolos.put(claseMetodo, new Simbolo(Token.METHOD, tokens.get(i - 1)));
+                    enMetodo = true;
+                    jerarquiaSimbolos.putIfAbsent(claseMetodo, new ArrayList<>());
+                    jerarquiaSimbolos.get(claseActual).add(claseMetodo);
+                    continue;
+                }
+                if (i - 1 >= 0 && esTipoDeDato(tokens.get(i - 1))) {
+                    if (enMetodo) {
+                        String claseMetodoVariable = claseMetodo + "." + cadenas.get(i);
+                        tablaSimbolos.put(claseMetodoVariable, new Simbolo(Token.VARIABLE, tokens.get(i - 1)));
+                        jerarquiaSimbolos.get(claseMetodo).add(claseMetodoVariable);
+                    } else {
+                        String claseVariable = claseActual + "." + cadenas.get(i);
+                        tablaSimbolos.put(claseVariable, new Simbolo(Token.VARIABLE, tokens.get(i - 1)));
+                        jerarquiaSimbolos.get(claseActual).add(claseVariable);
+                    }
+                    continue;
+                }
+            }
+        }
+    }
+
+    private String obtenerStringJerarquia(String cadena, int nivel) {
+        StringBuilder sb = new StringBuilder();
+        int idxPunto = cadena.lastIndexOf(".");
+        String cadenaSinPrefijo = idxPunto != -1 ? cadena.substring(idxPunto + 1) : cadena;
+        sb.append(" ".repeat(nivel * 8))
+                .append(cadenaSinPrefijo).append(" ")
+                .append(tablaSimbolos.get(cadena).getTipoToken()).append(" ")
+                .append(tablaSimbolos.get(cadena).getTipoDato() != Token.NONE ? tablaSimbolos.get(cadena).getTipoDato() : "")
+                .append("\n");
+        if (!jerarquiaSimbolos.containsKey(cadena))
+            return sb.toString();
+        for (String s : jerarquiaSimbolos.get(cadena)) {
+            sb.append(obtenerStringJerarquia(s, nivel + 1));
+        }
+        return sb.toString();
     }
 
     public boolean exito() {
@@ -226,6 +257,30 @@ public class AnalizadorLexico {
             }
         }
         return true;
+    }
+
+    private boolean esTipoDeDato(Token token) {
+        return token == Token.BOOLEAN || token == Token.INT || token == Token.DOUBLE || token == Token.FLOAT
+                || token == Token.CHAR || token == Token.STRING || token == Token.SHORT || token == Token.LONG
+                || token == Token.BYTE;
+    }
+
+    private boolean esTipoRetorno(Token token) {
+        return esTipoDeDato(token) || token == Token.VOID;
+    }
+
+    private int esCaracterDeSeparacion(char c) {
+        if(" \t\n".indexOf(c) != -1) {
+            return 0;
+        }
+        if("(){},;:.".indexOf(c) != -1) {
+            return 1;
+        }
+        if ("+-*/%<>!=".indexOf(c) != -1)
+            return 2;
+        if ("&|".indexOf(c) != -1)
+            return 3;
+        return -1;
     }
 
     private boolean esCadena(String token) {
@@ -244,7 +299,7 @@ public class AnalizadorLexico {
     }
 
     private boolean esEntero(String token) {
-        return token.matches("0|[1-9][0-9]*");
+        return token.matches("\\d+");
     }
 
     public boolean esReal(String token) {
@@ -284,11 +339,8 @@ public class AnalizadorLexico {
 
     public String obtenerStringTablaSimbolos() {
         StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Simbolo> entry : tablaSimbolos.entrySet()) {
-            sb.append(entry.getKey()).append(" ");
-            if (entry.getValue().getTipoDato() != Token.NONE)
-                sb.append(entry.getValue().getTipoDato()).append(" ");
-            sb.append(entry.getValue().getTipoToken()).append("\n");
+        for (String clase : clases) {
+            sb.append(obtenerStringJerarquia(clase, 0));
         }
         return sb.toString();
     }
