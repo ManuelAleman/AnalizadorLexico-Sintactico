@@ -57,6 +57,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtCode.setBounds(10, 50, 780, 540);
         txtCode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         Color fontColor = txtCode.getForeground();
+        txtCode.setFont(new Font("Arial", Font.PLAIN, 17));
 
         JScrollPane scroll = new JScrollPane(txtCode);
         scroll.setBounds(10, 50, 780, 540);
@@ -127,6 +128,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtConsole.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         txtConsole.setEnabled(false);
         txtConsole.setDisabledTextColor(fontColor);
+        txtConsole.setFont(new Font("Arial", Font.PLAIN, 17));
 
         JScrollPane scrollConsole = new JScrollPane(txtConsole);
         scrollConsole.setBounds(10, 50, 780, 240);
@@ -152,6 +154,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtTokens.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         txtTokens.setEnabled(false);
         txtTokens.setDisabledTextColor(fontColor);
+        // txtTokens.setFont(new Font("Arial", Font.PLAIN, 17));
 
         JScrollPane scrollTokens = new JScrollPane(txtTokens);
         scrollTokens.setBounds(10, 50, 280, 590);
@@ -178,6 +181,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtTablaSimbolos.setEnabled(false);
         txtTablaSimbolos.setDisabledTextColor(Color.BLACK);
         txtTablaSimbolos.setDisabledTextColor(fontColor);
+        // txtTablaSimbolos.setFont(new Font("Arial", Font.PLAIN, 17));
 
         JScrollPane scrollTree = new JScrollPane(txtTablaSimbolos);
         scrollTree.setBounds(10, 50, 280, 590);

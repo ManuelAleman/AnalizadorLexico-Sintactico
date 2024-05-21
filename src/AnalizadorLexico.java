@@ -195,10 +195,17 @@ public class AnalizadorLexico {
         jerarquiaSimbolos.clear();
         String claseActual = "", metodoActual = "", claseMetodo = "";
         clases = new ArrayList<>();
-        boolean enMetodo = false;
+        boolean enMetodo = false, entreParentesis = false;
         for (int i = 0; i < tokens.size(); i++) {
             if (tokens.get(i) == Token.RIGHT_CURLY_BRACE) {
                 enMetodo = false;
+            }
+            if (enMetodo) {
+                if (tokens.get(i) == Token.LEFT_PARENTHESIS) {
+                    entreParentesis = true;
+                } else if (tokens.get(i) == Token.RIGHT_PARENTHESIS) {
+                    entreParentesis = false;
+                }
             }
             if (esIdentificador(tokens.get(i).toString())) {
                 if (i - 1 >= 0 && tokens.get(i - 1) == Token.CLASS) {
@@ -220,7 +227,7 @@ public class AnalizadorLexico {
                 if (i - 1 >= 0 && esTipoDeDato(tokens.get(i - 1))) {
                     if (enMetodo) {
                         String claseMetodoVariable = claseMetodo + "." + cadenas.get(i);
-                        tablaSimbolos.put(claseMetodoVariable, new Simbolo(Token.VARIABLE, tokens.get(i - 1)));
+                        tablaSimbolos.put(claseMetodoVariable, new Simbolo(entreParentesis ? Token.PARAMETER : Token.VARIABLE, tokens.get(i - 1)));
                         jerarquiaSimbolos.get(claseMetodo).add(claseMetodoVariable);
                     } else {
                         String claseVariable = claseActual + "." + cadenas.get(i);
