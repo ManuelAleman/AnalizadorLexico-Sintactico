@@ -330,22 +330,39 @@ public class AnalizadorSintactico {
     }
 
     private boolean declaracionFor(int i) {
-        if (!evaluar(i, Token.FOR) || !evaluar(++i, Token.LEFT_PARENTHESIS) || !primeraParteFor(++i)) {
+        if (!evaluar(i, Token.FOR) || !evaluar(++i, Token.LEFT_PARENTHESIS)) {
+            return false;
+        }
+        if (evaluar(++i, Token.SEMICOLON)) {
+            siguienteIndice = i + 1;
+        } else if (!primeraParteFor(i)) {
             return false;
         }
         i = siguienteIndice;
-        if (!listaCondiciones(i)) {
+        System.out.println("JOSE LUIS " + tokens.get(i));
+
+        if (evaluar(i, Token.SEMICOLON)) {
+            siguienteIndice = i;
+        } else if (!listaCondiciones(i)) {
             return false;
         }
         i = siguienteIndice;
-        if (!evaluar(i, Token.SEMICOLON) || !asignacionValorVariables(++i)) {
+        System.out.println("MARIO BASTIDAS " + tokens.get(i));
+        if (!evaluar(i, Token.SEMICOLON)){
+            return false;
+        }
+        if (evaluar(++i, Token.RIGHT_PARENTHESIS)) {
+            siguienteIndice = i;
+        }  else if (!asignacionValorVariables(i)) {
             return false;
         }
         i = siguienteIndice;
+        System.out.println("CLEMENTE GARCIA " + tokens.get(i));
         if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
             return false;
         }
         i = siguienteIndice;
+        System.out.println("MARTHA ESTELA " + tokens.get(i));
         if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
             return false;
         }
