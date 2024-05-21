@@ -264,11 +264,10 @@ public class AnalizadorSintactico {
         if(!operadorAsignacion(++i)){
             return false;
         }
-        if (!llamadaMetodo(++i) && !operacionAritmetica(i)) {
+        if (!llamadaMetodo(++i) && !concatenacionStrings(i) && !operacionAritmetica(i)) {
             return false;
         }
         i = siguienteIndice;
-        System.out.println("X " + tokens.get(i));
         if (!evaluar(i, Token.COMMA)) {
             return true;
         }
@@ -312,8 +311,18 @@ public class AnalizadorSintactico {
             siguienteIndice = i;
             return true;
         }
-        siguienteIndice = i;
-        return false; // TODO: meter [else if] y [else]
+        if (evaluar(++i, Token.LEFT_CURLY_BRACE)) {
+            if (!listaInstrucciones(++i)) {
+                return false;
+            }
+            i = siguienteIndice;
+            if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+                return false;
+            }
+            siguienteIndice++;
+            return true;
+        }
+        return declaracionIf(i);
     }
 
     private boolean estructuraRepetitiva(int i) {
@@ -329,11 +338,11 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        if (!asignacionValorVariables(i)) {
+        if (!evaluar(i, Token.SEMICOLON) || !asignacionValorVariables(++i)) {
             return false;
         }
         i = siguienteIndice;
-        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
+        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
             return false;
         }
         i = siguienteIndice;
@@ -345,14 +354,11 @@ public class AnalizadorSintactico {
     }
 
     private boolean primeraParteFor(int i) {
-        if (declaracionVariable(i)) {
-            return true;
-        }
         if (evaluar(i, Token.SEMICOLON)) {
-            siguienteIndice = i + 1;
+            siguienteIndice = i;
             return true;
         }
-        return false;
+        return declaracionVariable(i);
     }
 
     private boolean declaracionWhile(int i) {
@@ -433,14 +439,25 @@ public class AnalizadorSintactico {
     }
 
     private boolean valorCondicion(int i) {
-        if (operacionAritmetica(i)) {
+        if (operacionAritmetica(i) || concatenacionStrings(i)) {
             return true;
         }
-        if (!literal(i)) {
+        if (literal(i)) {
+            siguienteIndice = i + 1;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean concatenacionStrings(int i) {
+        if (!stringValue(i) && !evaluar(i, Token.IDENTIFIER)) {
             return false;
         }
-        siguienteIndice = i + 1;
-        return true;
+        if (!evaluar(++i, Token.PLUS)) {
+            siguienteIndice = i;
+            return true;
+        }
+        return concatenacionStrings(++i);
     }
 
     private boolean operacionAritmetica(int i) {
