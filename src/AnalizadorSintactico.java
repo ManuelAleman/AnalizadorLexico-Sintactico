@@ -421,7 +421,7 @@ public class AnalizadorSintactico {
     }
 
     public boolean operadorLogico(int i){
-        return evaluar(i, Token.AND) || evaluar(i, Token.OR) || evaluar(i, Token.NEGATION);
+        return evaluar(i, Token.AND) || evaluar(i, Token.OR) || evaluar(i, Token.NOT);
     }
 
     public boolean operadorRelacional(int i){
@@ -449,7 +449,7 @@ public class AnalizadorSintactico {
     }
 
     private boolean operacionAritmetica(int i) {
-
+        return true;
     }
 
     private boolean evaluar(int i, Token token) {

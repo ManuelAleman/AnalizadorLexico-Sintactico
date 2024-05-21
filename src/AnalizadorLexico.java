@@ -3,6 +3,7 @@ import java.util.*;
 public class AnalizadorLexico {
     private HashMap<String, Token> mapaTokens, tablaSimbolos;
     private ArrayList<Token> tokens;
+    private ArrayList<Par> pares;
 
     public AnalizadorLexico() {
         mapaTokens = new HashMap<>();
@@ -53,7 +54,7 @@ public class AnalizadorLexico {
         // Operadores logicos
         mapaTokens.put("&&", Token.AND);
         mapaTokens.put("||", Token.OR);
-        mapaTokens.put("!", Token.NEGATION);
+        mapaTokens.put("!", Token.NOT);
 
         // Operadores relacionales
         mapaTokens.put("<", Token.LESS);
@@ -130,20 +131,32 @@ public class AnalizadorLexico {
     }
 
     public void analizar(String codigo) {
+        int filaActual = 1, columnaActual = 0;
         codigo += " ";
         tokens = new ArrayList<>();
+        pares = new ArrayList<>();
         ArrayList<String> cadenas = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean comillasAbiertas = false;
+
         for (int i = 0; i < codigo.length(); i++) {
+            columnaActual++;
             int tipoCaracterDeSeparacion = esCaracterDeSeparacion(codigo.charAt(i));
+
             if (codigo.charAt(i) == '"') {
                 comillasAbiertas = !comillasAbiertas;
             }
+
+            if (tipoCaracterDeSeparacion == 0 && codigo.charAt(i) == '\n') {
+                filaActual++;
+                columnaActual = 0;
+            }
+
             if (tipoCaracterDeSeparacion == -1 || (comillasAbiertas && i < codigo.length() - 1 )) {
                 sb.append(codigo.charAt(i));
                 continue;
             }
+
             if (sb.isEmpty()) {
                 if (tipoCaracterDeSeparacion >= 1) {
                     String tokenO = "" + codigo.charAt(i);
@@ -152,7 +165,7 @@ public class AnalizadorLexico {
                         tokenO += codigo.charAt(i + 1);
                         i++;
                     }
-                    tokens.add(mapaTokens.get(tokenO));
+                    guardarToken(mapaTokens.get(tokenO), filaActual, columnaActual - tokenO.length());
                     cadenas.add(tokenO);
                 }
                 continue;
@@ -161,19 +174,19 @@ public class AnalizadorLexico {
             String token = sb.toString();
             boolean tokenValido = false;
             if (mapaTokens.containsKey(token)) {
-                tokens.add(mapaTokens.get(token));
+                guardarToken(mapaTokens.get(token), filaActual, columnaActual - token.length());
                 tokenValido = true;
             }
             else if (esNumero(token)) {
-                tokens.add(Token.NUMBER);
+                guardarToken(Token.NUMBER, filaActual, columnaActual - token.length());
                 tokenValido = true;
             }
             else if (esIdentificador(token)) {
-                tokens.add(Token.IDENTIFIER);
+                guardarToken(Token.IDENTIFIER, filaActual, columnaActual - token.length());
                 tokenValido = true;
             }
             else if(esCadena(token)) {
-                tokens.add(Token.STRING_VALUE);
+                guardarToken(Token.STRING_VALUE, filaActual, columnaActual - token.length());
                 tokenValido = true;
             }
 
@@ -186,7 +199,7 @@ public class AnalizadorLexico {
                     tokenO += codigo.charAt(i + 1);
                     i++;
                 }
-                tokens.add(mapaTokens.get(tokenO));
+                guardarToken(mapaTokens.get(tokenO), filaActual, columnaActual - tokenO.length());
                 cadenas.add(tokenO);
             }
 
@@ -195,7 +208,7 @@ public class AnalizadorLexico {
                 continue;
             }
 
-            tokens.add(Token.ERROR);
+            guardarToken(Token.ERROR, filaActual, columnaActual - token.length());
             return;
         }
 
@@ -247,11 +260,18 @@ public class AnalizadorLexico {
 
     public String obtenerStringTokens() {
         StringBuilder sb = new StringBuilder();
-        for (Token token : tokens) {
-            sb.append(token);
+        for (Par par : pares) {
+            sb.append(par.getToken()).append(" ");
+            sb.append(par.getDireccion().getFila()).append(" ");
+            sb.append(par.getDireccion().getColumna()).append(" ");
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    private void guardarToken(Token token, int fila, int columna) {
+        tokens.add(token);
+        pares.add(new Par(tokens.getLast(), new Direccion(fila, columna)));
     }
 
     public String obtenerStringTablaSimbolos() {
@@ -272,5 +292,9 @@ public class AnalizadorLexico {
 
     public ArrayList<Token> getTokens() {
         return tokens;
+    }
+
+    public ArrayList<Par> getPares() {
+        return pares;
     }
 }
