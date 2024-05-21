@@ -1,21 +1,21 @@
 public class Par {
     private Token token; 
-    private Direccion direccion;
-    public Par(Token token, Direccion direccion) {
+    private Posicion posicion;
+    public Par(Token token, Posicion posicion) {
         this.token = token;
-        this.direccion = direccion;
+        this.posicion = posicion;
     }
 
-    public Direccion getDireccion() {
-        return direccion;
+    public Posicion getDireccion() {
+        return posicion;
     }
 
     public Token getToken() {
         return token;
     }
 
-    public void setDireccion(Direccion direccion) {
-        this.direccion = direccion;
+    public void setDireccion(Posicion posicion) {
+        this.posicion = posicion;
     }
 
     public void setToken(Token token) {

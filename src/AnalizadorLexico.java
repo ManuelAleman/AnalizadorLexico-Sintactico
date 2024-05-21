@@ -1,12 +1,14 @@
 import java.util.*;
 
 public class AnalizadorLexico {
-    private HashMap<String, Token> mapaTokens, tablaSimbolos;
+    private final HashMap<String, Token> mapaTokens;
+    private final HashMap<String, Simbolo> tablaSimbolos;
     private ArrayList<Token> tokens;
     private ArrayList<Par> pares;
 
     public AnalizadorLexico() {
         mapaTokens = new HashMap<>();
+        tablaSimbolos = new HashMap<>();
 
         mapaTokens.put("class", Token.CLASS);
         mapaTokens.put("extends", Token.EXTENDS);
@@ -94,20 +96,18 @@ public class AnalizadorLexico {
         mapaTokens.put("null", Token.NULL);
     }
 
-    private HashMap<String, Token> generarTablaDeSimbolos(ArrayList<Token> tokens, ArrayList<String> cadenas) {
-        tablaSimbolos = new HashMap<>();
+    private void generarTablaDeSimbolos(ArrayList<Token> tokens, ArrayList<String> cadenas) {
         for (int i = 0; i < tokens.size(); i++) {
             if (esIdentificador(tokens.get(i).toString())) {
                 if (i - 1 >= 0 && tokens.get(i - 1) == Token.CLASS) {
-                    tablaSimbolos.put(cadenas.get(i), Token.CLASSNAME);
+                    tablaSimbolos.put(cadenas.get(i), new Simbolo(Token.CLASSNAME, Token.NONE));
                 } else if (i + 1 < tokens.size() && tokens.get(i) == Token.IDENTIFIER && tokens.get(i + 1) == Token.LEFT_PARENTHESIS) {
-                    tablaSimbolos.put(cadenas.get(i), Token.METHOD);
+                    tablaSimbolos.put(cadenas.get(i), new Simbolo(Token.METHOD, tokens.get(i - 1)));
                 } else if (i - 1 >= 0 && esTipoDeDato(tokens.get(i - 1))) {
-                    tablaSimbolos.put(cadenas.get(i), Token.VARIABLE);
+                    tablaSimbolos.put(cadenas.get(i), new Simbolo(Token.VARIABLE, tokens.get(i - 1)));
                 }
             }
         }
-        return tablaSimbolos;
     }
 
     private boolean esTipoDeDato(Token token) {
@@ -177,8 +177,12 @@ public class AnalizadorLexico {
                 guardarToken(mapaTokens.get(token), filaActual, columnaActual - token.length());
                 tokenValido = true;
             }
-            else if (esNumero(token)) {
-                guardarToken(Token.NUMBER, filaActual, columnaActual - token.length());
+            else if (esEntero(token)) {
+                guardarToken(Token.INTEGER, filaActual, columnaActual - token.length());
+                tokenValido = true;
+            }
+            else if (esReal(token)) {
+                guardarToken(Token.REAL, filaActual, columnaActual - token.length());
                 tokenValido = true;
             }
             else if (esIdentificador(token)) {
@@ -239,8 +243,12 @@ public class AnalizadorLexico {
         return flag;
     }
 
-    private boolean esNumero(String token) {
-        return token.matches("0|[1-9][0-9]{0,2}|1000");
+    private boolean esEntero(String token) {
+        return token.matches("0|[1-9][0-9]*");
+    }
+
+    public boolean esReal(String token) {
+        return token.matches("\\d*\\.\\d+");
     }
 
     private boolean esIdentificador(String token) {
@@ -271,13 +279,16 @@ public class AnalizadorLexico {
 
     private void guardarToken(Token token, int fila, int columna) {
         tokens.add(token);
-        pares.add(new Par(tokens.getLast(), new Direccion(fila, columna)));
+        pares.add(new Par(tokens.getLast(), new Posicion(fila, columna)));
     }
 
     public String obtenerStringTablaSimbolos() {
         StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Token> entry : tablaSimbolos.entrySet()) {
-            sb.append(entry.getKey()).append(" ").append(entry.getValue()).append("\n");
+        for (Map.Entry<String, Simbolo> entry : tablaSimbolos.entrySet()) {
+            sb.append(entry.getKey()).append(" ");
+            if (entry.getValue().getTipoDato() != Token.NONE)
+                sb.append(entry.getValue().getTipoDato()).append(" ");
+            sb.append(entry.getValue().getTipoToken()).append("\n");
         }
         return sb.toString();
     }
@@ -286,7 +297,7 @@ public class AnalizadorLexico {
         return mapaTokens;
     }
 
-    public HashMap<String, Token> getTablaSimbolos() {
+    public HashMap<String, Simbolo> getTablaSimbolos() {
         return tablaSimbolos;
     }
 

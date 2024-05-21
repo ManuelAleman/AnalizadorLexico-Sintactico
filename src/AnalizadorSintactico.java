@@ -3,6 +3,7 @@ import java.util.ArrayList;
 public class AnalizadorSintactico {
     private ArrayList<Token> tokens;
     private int siguienteIndice;
+    private ArrayList<String> errores;
 
     public boolean analizar(ArrayList<Token> tokens) {
         this.tokens = tokens;
@@ -232,7 +233,6 @@ public class AnalizadorSintactico {
         if(!evaluar(i, Token.IF)){
             return false;
         }
-
         if(!evaluar(++i, Token.LEFT_PARENTHESIS)){
             return false;
         }
@@ -436,7 +436,7 @@ public class AnalizadorSintactico {
     }
 
     public boolean numero(int i){
-        return evaluar(i, Token.NUMBER); // TODO: AGREGAR EL REAL Y CAMBIAR NUMBER POR INTEGER
+        return evaluar(i, Token.INTEGER) || evaluar(i, Token.REAL); // TODO: AGREGAR EL REAL Y CAMBIAR NUMBER POR INTEGER
     }
 
     private boolean tipoDato(int i){
