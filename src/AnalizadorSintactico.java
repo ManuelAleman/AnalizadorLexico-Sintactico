@@ -471,9 +471,9 @@ public class AnalizadorSintactico {
         return evaluar(i, Token.INCREMENT) || evaluar(i, Token.DECREMENT);
     }
 
-
     private boolean valorBooleano(int i) {
         return evaluar(i, Token.TRUE) || evaluar(i, Token.FALSE);
+
     }
 
     private boolean evaluar(int i, Token token) {
