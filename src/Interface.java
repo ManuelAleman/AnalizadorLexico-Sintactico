@@ -3,6 +3,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Interface extends JFrame implements ActionListener, KeyListener {
@@ -11,7 +13,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
 
     private AnalizadorSintactico analizadorSintactico = new AnalizadorSintactico();
 
-    private JButton btnOpen, btnLexico, btnSintactico;
+    private JButton btnOpen, btnLexico, btnSintactico, btnGuardarCodigo;
 
     private JFileChooser fileChooser;
 
@@ -60,12 +62,21 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         codeArea.add(scroll);
 
         btnOpen = new JButton("Abrir Archivo");
-        btnOpen.setBounds(1090, 30, 150, 50);
+        btnOpen.setBounds(1000, 30, 150, 50);
+        //btnOpen.setBounds(1090, 30, 150, 50);
         btnOpen.setBackground(new Color(192, 199, 200));
         btnOpen.setForeground(Color.BLACK);
         btnOpen.setFont(new Font("Tahoma", Font.BOLD, 15));
         btnOpen.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         add(btnOpen);
+
+        btnGuardarCodigo = new JButton("Guardar Codigo");
+        btnGuardarCodigo.setBounds(1180, 30, 150, 50);
+        btnGuardarCodigo.setBackground(new Color(192,199,200));
+        btnGuardarCodigo.setForeground(Color.BLACK);
+        btnGuardarCodigo.setFont(new Font("Tahoma", Font.BOLD, 15));
+        btnGuardarCodigo.setBorder(BorderFactory.createLineBorder(new Color(200,200,200)));
+        add(btnGuardarCodigo);
 
         btnLexico = new JButton("Lexico");
         btnLexico.setBounds(1090, 130, 150, 50);
@@ -168,6 +179,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
 
     public void addListeners(){
         btnOpen.addActionListener(this);
+        btnGuardarCodigo.addActionListener(this);
         btnLexico.addActionListener(this);
         btnSintactico.addActionListener(this);
         txtCode.addKeyListener(this);
@@ -216,6 +228,24 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
             }else {
                 lblSintacticoStatus.setBackground(Color.red);
                 btnSintactico.setEnabled(false);
+            }
+        }
+        if(e.getSource() == btnGuardarCodigo) {
+            String codigo = txtCode.getText();
+            fileChooser.showSaveDialog(null);
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+
+            File archivo = fileChooser.getSelectedFile();
+
+            FileWriter writer;
+            try {
+                writer = new FileWriter(archivo,true);
+                writer.write(codigo);
+                writer.close();
+            }catch (FileNotFoundException ex) {
+                JOptionPane.showMessageDialog(null,"Error al guardar, poner nombre al archivo");
+            }catch(IOException ex) {
+                JOptionPane.showMessageDialog(null,"Error al guardar, en la salida");
             }
         }
     }
