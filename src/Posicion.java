@@ -1,7 +1,7 @@
-public class Direccion {
+public class Posicion {
     private int fila, columna;
 
-    public Direccion(int fila, int columna) {
+    public Posicion(int fila, int columna) {
         this.fila = fila;
         this.columna = columna;
     }
