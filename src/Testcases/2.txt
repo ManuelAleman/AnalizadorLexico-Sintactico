@@ -1,5 +1,9 @@
 public class Foo extends Doo {
     public static void main(string args) {
 	    int a = 5+3*(5/2)*3;
+	    int b = 3;
+	    if (a < b) {
+	        x = 5;
+	    }
     }
 }

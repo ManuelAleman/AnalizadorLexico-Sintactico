@@ -53,7 +53,7 @@ public class AnalizadorLexico {
         // Operadores logicos
         mapaTokens.put("&&", Token.AND);
         mapaTokens.put("||", Token.OR);
-        mapaTokens.put("!", Token.NEGATION);
+        mapaTokens.put("!", Token.NOT);
 
         // Operadores relacionales
         mapaTokens.put("<", Token.LESS);
