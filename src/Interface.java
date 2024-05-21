@@ -17,9 +17,9 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
 
     private JFileChooser fileChooser;
 
-    private JLabel lblLexicoStatus, lblSintacticoStatus, lblConsoleInfo;
+    private JLabel lblLexicoStatus, lblSintacticoStatus;
 
-    private JTextArea txtCode, txtTablaSimbolos, txtTokens;
+    private JTextArea txtCode, txtConsole, txtTablaSimbolos, txtTokens;
 
     private int idBotonActual;
 
@@ -39,7 +39,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         setVisible(true);
     }
 
-    public void makeInterface() {
+    private void makeInterface() {
         JPanel codeArea = new JPanel();
         codeArea.setLayout(null);
         codeArea.setBounds(30, 30, 800, 600);
@@ -56,6 +56,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtCode = new JTextArea();
         txtCode.setBounds(10, 50, 780, 540);
         txtCode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        Color fontColor = txtCode.getForeground();
 
         JScrollPane scroll = new JScrollPane(txtCode);
         scroll.setBounds(10, 50, 780, 540);
@@ -63,7 +64,6 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
 
         btnOpen = new JButton("Abrir Archivo");
         btnOpen.setBounds(1000, 30, 150, 50);
-        //btnOpen.setBounds(1090, 30, 150, 50);
         btnOpen.setBackground(new Color(192, 199, 200));
         btnOpen.setForeground(Color.BLACK);
         btnOpen.setFont(new Font("Tahoma", Font.BOLD, 15));
@@ -120,13 +120,15 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         lblConsole.setBounds(0, 0, 800, 50);
         console.add(lblConsole);
 
-        lblConsoleInfo = new JLabel();
-        lblConsoleInfo.setBounds(10, 50, 780, 240);
-        lblConsoleInfo.setBackground(Color.WHITE);
-        lblConsoleInfo.setOpaque(true);
-        lblConsoleInfo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        txtConsole = new JTextArea();
+        txtConsole.setBounds(10, 50, 780, 240);
+        txtConsole.setBackground(Color.WHITE);
+        txtConsole.setOpaque(true);
+        txtConsole.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        txtConsole.setEnabled(false);
+        txtConsole.setDisabledTextColor(fontColor);
 
-        JScrollPane scrollConsole = new JScrollPane(lblConsoleInfo);
+        JScrollPane scrollConsole = new JScrollPane(txtConsole);
         scrollConsole.setBounds(10, 50, 780, 240);
         console.add(scrollConsole);
 
@@ -148,6 +150,8 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtTokens.setBackground(Color.WHITE);
         txtTokens.setOpaque(true);
         txtTokens.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        txtTokens.setEnabled(false);
+        txtTokens.setDisabledTextColor(fontColor);
 
         JScrollPane scrollTokens = new JScrollPane(txtTokens);
         scrollTokens.setBounds(10, 50, 280, 590);
@@ -171,13 +175,16 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtTablaSimbolos.setBackground(Color.WHITE);
         txtTablaSimbolos.setOpaque(true);
         txtTablaSimbolos.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        txtTablaSimbolos.setEnabled(false);
+        txtTablaSimbolos.setDisabledTextColor(Color.BLACK);
+        txtTablaSimbolos.setDisabledTextColor(fontColor);
 
         JScrollPane scrollTree = new JScrollPane(txtTablaSimbolos);
         scrollTree.setBounds(10, 50, 280, 590);
         tree.add(scrollTree);
     }
 
-    public void addListeners(){
+    private void addListeners(){
         btnOpen.addActionListener(this);
         btnGuardarCodigo.addActionListener(this);
         btnLexico.addActionListener(this);
@@ -212,9 +219,11 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
             idBotonActual = 0;
             if(analizadorLexico.exito()) {
                 lblLexicoStatus.setBackground(Color.green);
+                txtConsole.setText("Analisis lexico finalizado correctamente");
                 btnSintactico.setEnabled(true);
             }else {
                 lblLexicoStatus.setBackground(Color.red);
+                txtConsole.setText("Ocurrio algun error en el analisis lexico");
             }
             revalidate();
             repaint();
@@ -225,8 +234,10 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
             }
             if(analizadorSintactico.analizar(analizadorLexico.getTokens())) {
                 lblSintacticoStatus.setBackground(Color.green);
+                txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado correctamente");
             }else {
                 lblSintacticoStatus.setBackground(Color.red);
+                txtConsole.setText(txtConsole.getText() + "\n" + "Ocurrio algun error en el analisis sintatico");
                 btnSintactico.setEnabled(false);
             }
         }

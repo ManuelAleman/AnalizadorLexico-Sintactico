@@ -302,7 +302,7 @@ public class AnalizadorLexico {
         return token.matches("\\d+");
     }
 
-    public boolean esReal(String token) {
+    private boolean esReal(String token) {
         return token.matches("\\d*\\.\\d+");
     }
 
