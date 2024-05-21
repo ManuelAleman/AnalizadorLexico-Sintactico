@@ -236,7 +236,12 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
             fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
             File archivo = fileChooser.getSelectedFile();
-
+            if(archivo == null){
+                JOptionPane.showMessageDialog(null,
+                        "Su archivo no se ha guardado",
+                        "Advertencia",JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             FileWriter writer;
             try {
                 writer = new FileWriter(archivo,true);
