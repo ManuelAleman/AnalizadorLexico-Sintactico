@@ -2,13 +2,14 @@ import java.util.ArrayList;
 
 public class AnalizadorSintactico {
     private ArrayList<Token> tokens;
+    private ArrayList<Posicion> posiciones;
     private int siguienteIndice;
-    private ArrayList<String> errores;
+    private String error;
 
     public boolean analizar(ArrayList<Token> tokens) {
         this.tokens = tokens;
         siguienteIndice = 0;
-
+        error = "";
         return declaracionClases(0);
     }
 
@@ -35,13 +36,19 @@ public class AnalizadorSintactico {
             i++;
         }
 
-        if (!evaluar(i, Token.CLASS) ||
-                !evaluar(++i, Token.IDENTIFIER)) {
+        if (!evaluar(i, Token.CLASS)) {
+            asignarError(i, Token.CLASS);
+            return false;
+        }
+        if (!evaluar(++i, Token.IDENTIFIER)) {
+            asignarError(i, Token.IDENTIFIER);
+            System.out.println();
             return false;
         }
 
         if (evaluar(++i, Token.EXTENDS)) {
             if (!evaluar(++i, Token.IDENTIFIER)) {
+                asignarError(i, Token.IDENTIFIER);
                 return false;
             }
             i++;
@@ -54,12 +61,18 @@ public class AnalizadorSintactico {
             i = siguienteIndice;
         }
 
-        if (!evaluar(i, Token.LEFT_CURLY_BRACE) || !cuerpoClase(++i)) {
+        if (!evaluar(i, Token.LEFT_CURLY_BRACE)) {
+            asignarError(i, Token.LEFT_CURLY_BRACE);
+            return false;
+        }
+
+        if (!cuerpoClase(++i)) {
             return false;
         }
         i = siguienteIndice;
 
         if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+            asignarError(i, Token.RIGHT_CURLY_BRACE);
             return false;
         }
         siguienteIndice = i + 1;
@@ -68,6 +81,7 @@ public class AnalizadorSintactico {
 
     private boolean implementaciones(int i) {
         if (!evaluar(i, Token.IDENTIFIER)) {
+            asignarError(i, Token.IDENTIFIER);
             return false;
         }
         if (!evaluar(++i, Token.COMMA)) {
@@ -264,7 +278,7 @@ public class AnalizadorSintactico {
         if(!operadorAsignacion(++i)){
             return false;
         }
-        if (!llamadaMetodo(++i) && !concatenacionStrings(i) && !operacionAritmetica(i)) {
+        if (!llamadaMetodo(++i) && !operacionAritmetica(i) && !concatenacionStrings(i)) {
             return false;
         }
         i = siguienteIndice;
@@ -558,7 +572,20 @@ public class AnalizadorSintactico {
         return evaluar(i, Token.TRUE) || evaluar(i, Token.FALSE);
     }
 
-    private boolean evaluar(int i, Token token) {
-        return i < tokens.size() && tokens.get(i).equals(token);
+    private boolean evaluar(int i, Token tokenEsperado) {
+        return i < tokens.size() && tokens.get(i).equals(tokenEsperado);
+    }
+
+    private void asignarError(int i, Token tokenEsperado) {
+        if (i < tokens.size()) {
+            //error = "Error en la linea " + posiciones.get(i).getFila() + " y columna " + posiciones.get(i).getColumna() + "\n\t\t";
+            error += "Se esperaba el token " + tokenEsperado + " pero se encontro el token " + tokens.get(i);
+            return;
+        }
+        error = "Se esperaba el token " + tokenEsperado + " pero se encontro el fin del archivo";
+    }
+
+    public String getError() {
+        return error;
     }
 }

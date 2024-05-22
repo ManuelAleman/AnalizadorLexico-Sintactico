@@ -6,7 +6,7 @@ public class AnalizadorLexico {
     private final HashMap<String, ArrayList<String>> jerarquiaSimbolos;
     private ArrayList<Token> tokens;
     private ArrayList<Par> pares;
-    private ArrayList<String> clases;
+    private ArrayList<String> clases, cadenas;
 
     public AnalizadorLexico() {
         mapaTokens = new HashMap<>();
@@ -106,7 +106,7 @@ public class AnalizadorLexico {
         tokens = new ArrayList<>();
         pares = new ArrayList<>();
         clases = new ArrayList<>();
-        ArrayList<String> cadenas = new ArrayList<>();
+        cadenas = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean comillasAbiertas = false;
 
@@ -184,7 +184,8 @@ public class AnalizadorLexico {
             }
 
             guardarToken(Token.ERROR, filaActual, columnaActual - token.length());
-            return;
+            cadenas.add(sb.toString());
+            sb = new StringBuilder();
         }
 
         generarTablaDeSimbolos(cadenas);
@@ -330,10 +331,11 @@ public class AnalizadorLexico {
 
     public String obtenerStringTokens() {
         StringBuilder sb = new StringBuilder();
-        for (Par par : pares) {
-            sb.append(par.getToken()).append(" ");
-            sb.append(par.getDireccion().getFila()).append(" ");
-            sb.append(par.getDireccion().getColumna()).append(" ");
+        for (int i = 0; i < pares.size(); i++) {
+            sb.append(cadenas.get(i)).append(" ");
+            sb.append(pares.get(i).getToken()).append(" ");
+            sb.append(pares.get(i).getDireccion().getFila()).append(" ");
+            sb.append(pares.get(i).getDireccion().getColumna()).append(" ");
             sb.append("\n");
         }
         return sb.toString();

@@ -31,7 +31,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
-        setResizable(false);
+
         fileChooser = new JFileChooser();
         makeInterface();
         addListeners();
@@ -58,6 +58,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         txtCode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         Color fontColor = txtCode.getForeground();
         txtCode.setFont(new Font("Arial", Font.PLAIN, 17));
+        txtCode.setTabSize(4);
 
         JScrollPane scroll = new JScrollPane(txtCode);
         scroll.setBounds(10, 50, 780, 540);
@@ -241,7 +242,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
                 txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado correctamente");
             }else {
                 lblSintacticoStatus.setBackground(Color.red);
-                txtConsole.setText(txtConsole.getText() + "\n" + "Ocurrio algun error en el analisis sintatico");
+                txtConsole.setText(analizadorSintactico.getError());
                 btnSintactico.setEnabled(false);
             }
         }
@@ -259,7 +260,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
             }
             FileWriter writer;
             try {
-                writer = new FileWriter(archivo,true);
+                writer = new FileWriter(archivo,false);
                 writer.write(codigo);
                 writer.close();
             }catch (FileNotFoundException ex) {

@@ -1,0 +1,27 @@
+ public class Foo extends Doo implements Poo, Too, Roo {
+     public static void main(string args) {
+ 	    int a = 5+3*(5/2)*3;
+ 	    int b = 3;
+ 	    if (a < b && b == 5 || x % 3 == 0 && juan == "luis") {
+ 	        x = 5;
+ 	    }
+ 	    for (int i = 0; i * i < n; i = i + 1) {
+                                   for (int j = 0; j < n; j = j + 1 * j) {
+                                           for (int k = i + j; k < n; k = k + 8) {
+
+                                           }
+                                   }
+                            }
+     }
+ }
+ public class Clase2 extends Hola {
+ 	int x = 3;
+ 	public int print(string s) {
+ 		y = z;
+ 		b = 9;
+ 	}
+ 	string h = "hola mundo";
+ 	public void main() {
+ 		x = y;
+ 	}
+ }
