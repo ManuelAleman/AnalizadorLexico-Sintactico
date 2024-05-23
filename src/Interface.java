@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -7,10 +9,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class Interface extends JFrame implements ActionListener, KeyListener {
+public class Interface extends JFrame implements ActionListener, KeyListener, DocumentListener {
 
     private AnalizadorLexico analizadorLexico = new AnalizadorLexico();
 
+    private int intLineCount = 1;
     private AnalizadorSintactico analizadorSintactico = new AnalizadorSintactico();
 
     private JButton btnOpen, btnLexico, btnSintactico, btnGuardarCodigo;
@@ -19,7 +22,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
 
     private JLabel lblLexicoStatus, lblSintacticoStatus;
 
-    private JTextArea txtCode, txtConsole, txtTablaSimbolos, txtTokens;
+    private JTextArea txtCode, txtConsole, txtTablaSimbolos, txtTokens, txtLineCount;
 
     private int idBotonActual;
 
@@ -42,7 +45,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
     private void makeInterface() {
         JPanel codeArea = new JPanel();
         codeArea.setLayout(null);
-        codeArea.setBounds(30, 30, 800, 600);
+        codeArea.setBounds(10, 30, 820, 600);
         codeArea.setBackground(new Color(184, 228, 250));
         codeArea.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         add(codeArea);
@@ -54,14 +57,27 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
         codeArea.add(lblCode);
 
         txtCode = new JTextArea();
-        txtCode.setBounds(10, 50, 780, 540);
-        txtCode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        txtCode.getDocument().addDocumentListener(this);
+        txtCode.setBounds(50, 50, 750, 540);
+        txtCode.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         Color fontColor = txtCode.getForeground();
         txtCode.setFont(new Font("Arial", Font.PLAIN, 17));
         txtCode.setTabSize(4);
 
-        JScrollPane scroll = new JScrollPane(txtCode);
-        scroll.setBounds(10, 50, 780, 540);
+        txtLineCount = new JTextArea("  " + intLineCount + "   ");
+        txtLineCount.setBounds(0, 50, 40, 540);
+        txtLineCount.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+        txtLineCount.setFont(new Font("Arial", Font.PLAIN, 17));
+        txtLineCount.setForeground(Color.BLACK);
+        txtLineCount.setEnabled(false);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.add(txtLineCount, BorderLayout.WEST);
+        panel.add(txtCode, BorderLayout.CENTER);
+
+        JScrollPane scroll = new JScrollPane(panel);
+        scroll.setBounds(25, 50, 775, 540);
         codeArea.add(scroll);
 
         btnOpen = new JButton("Abrir Archivo");
@@ -289,5 +305,29 @@ public class Interface extends JFrame implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
 
+    }
+
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        lineCount();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        lineCount();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        lineCount();
+    }
+
+    private void lineCount() {
+        int intLineCount = txtCode.getLineCount();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= intLineCount; i++) {
+            sb.append("  ").append(i).append("   \n");
+        }
+        txtLineCount.setText(sb.toString());
     }
 }
