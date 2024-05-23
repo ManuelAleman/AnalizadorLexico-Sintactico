@@ -6,19 +6,11 @@ public class Par {
         this.posicion = posicion;
     }
 
-    public Posicion getDireccion() {
+    public Posicion getPosicion() {
         return posicion;
     }
 
     public Token getToken() {
         return token;
-    }
-
-    public void setDireccion(Posicion posicion) {
-        this.posicion = posicion;
-    }
-
-    public void setToken(Token token) {
-        this.token = token;
     }
 }

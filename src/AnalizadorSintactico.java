@@ -4,12 +4,11 @@ public class AnalizadorSintactico {
     private ArrayList<Token> tokens;
     private ArrayList<Posicion> posiciones;
     private int siguienteIndice;
-    private String error;
+    private ErrorSintactico error;
 
     public boolean analizar(ArrayList<Token> tokens) {
         this.tokens = tokens;
         siguienteIndice = 0;
-        error = "";
         return declaracionClases(0);
     }
 
@@ -17,17 +16,10 @@ public class AnalizadorSintactico {
         if (i == tokens.size()) {
             return true;
         }
-        if (!clase(i)) {
-            return false;
-        }
-        return declaracionClases(siguienteIndice);
+        return clase(i) && declaracionClases(siguienteIndice);
     }
 
     private boolean clase(int i) {
-        if (i == tokens.size()) {
-            return false;
-        }
-
         if (modificadorAcceso(i)) {
             i++;
         }
@@ -37,18 +29,18 @@ public class AnalizadorSintactico {
         }
 
         if (!evaluar(i, Token.CLASS)) {
-            asignarError(i, Token.CLASS);
+            asignarError(i, "class");
             return false;
         }
         if (!evaluar(++i, Token.IDENTIFIER)) {
-            asignarError(i, Token.IDENTIFIER);
+            asignarError(i, "identificador");
             System.out.println();
             return false;
         }
 
         if (evaluar(++i, Token.EXTENDS)) {
             if (!evaluar(++i, Token.IDENTIFIER)) {
-                asignarError(i, Token.IDENTIFIER);
+                asignarError(i, "identificador");
                 return false;
             }
             i++;
@@ -62,7 +54,7 @@ public class AnalizadorSintactico {
         }
 
         if (!evaluar(i, Token.LEFT_CURLY_BRACE)) {
-            asignarError(i, Token.LEFT_CURLY_BRACE);
+            asignarError(i, "{");
             return false;
         }
 
@@ -72,7 +64,7 @@ public class AnalizadorSintactico {
         i = siguienteIndice;
 
         if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
-            asignarError(i, Token.RIGHT_CURLY_BRACE);
+            asignarError(i, "}");
             return false;
         }
         siguienteIndice = i + 1;
@@ -81,7 +73,7 @@ public class AnalizadorSintactico {
 
     private boolean implementaciones(int i) {
         if (!evaluar(i, Token.IDENTIFIER)) {
-            asignarError(i, Token.IDENTIFIER);
+            asignarError(i, "identificador");
             return false;
         }
         if (!evaluar(++i, Token.COMMA)) {
@@ -92,15 +84,11 @@ public class AnalizadorSintactico {
     }
 
     private boolean cuerpoClase(int i) {
-        if (evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+        if (evaluar(i, Token.RIGHT_CURLY_BRACE) || i == tokens.size()) {
             siguienteIndice = i;
             return true;
         }
-        if (declaracionAtributo(i) || declaracionMetodo(i)) {
-            cuerpoClase(siguienteIndice);
-            return true;
-        }
-        return false;
+        return (declaracionAtributo(i) || declaracionMetodo(i)) && cuerpoClase(siguienteIndice);
     }
 
     private boolean declaracionAtributo(int i) {
@@ -124,20 +112,45 @@ public class AnalizadorSintactico {
             i++;
         }
 
-        if (!tipoRetorno(i) || !evaluar(++i, Token.IDENTIFIER) || !evaluar(++i, Token.LEFT_PARENTHESIS)) {
+        if (!tipoRetorno(i)) {
             return false;
         }
-        if (listaParametros(++i)) {
-            i = siguienteIndice;
-        }
-        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
-            return false;
-        }
-        return evaluar(siguienteIndice++, Token.RIGHT_CURLY_BRACE);
-    }
 
-    private boolean modificadorAcceso(int i) {
-        return evaluar(i, Token.PUBLIC) || evaluar(i, Token.PRIVATE) || evaluar(i, Token.PROTECTED);
+        if (!evaluar(++i, Token.IDENTIFIER)) {
+            asignarError(i, "identificador");
+            return false;
+        }
+
+        if (!evaluar(++i, Token.LEFT_PARENTHESIS)) {
+            asignarError(i, "(");
+            return false;
+        }
+
+        if (!listaParametros(++i, true)) {
+            return false;
+        }
+
+        i = siguienteIndice;
+
+        if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            asignarError(i, ")");
+            return false;
+        }
+        if (!evaluar(++i, Token.LEFT_CURLY_BRACE)) {
+            asignarError(i, "{");
+            return false;
+        }
+        if (!listaInstrucciones(++i)) {
+            return false;
+        }
+
+        i = siguienteIndice;
+        if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+            asignarError(i, "}");
+            return false;
+        }
+        siguienteIndice = i + 1;
+        return true;
     }
 
     private boolean listaInstrucciones(int i) {
@@ -145,13 +158,14 @@ public class AnalizadorSintactico {
             siguienteIndice = i;
             return true;
         }
-        if (!declaracionVariable(i) && !asignacionValorVariables(i) && !estructuraCondicional(i) &&
+        if (!declaracionVariable(i) && !asignacionValorVariables(i, true) && !estructuraCondicional(i) &&
                 !estructuraRepetitiva(i) && !salto(i) && !llamadaMetodo(i)) {
             return false;
         }
-        if (asignacionValorVariables(i) || llamadaMetodo(i)) {
+        if (asignacionValorVariables(i, true) || llamadaMetodo(i)) {
             i = siguienteIndice;
             if (!evaluar(i, Token.SEMICOLON)) {
+                asignarError(i, ";");
                 return false;
             }
             siguienteIndice++;
@@ -171,17 +185,16 @@ public class AnalizadorSintactico {
             return llamadaMetodo(++i);
         }
         if (!evaluar(i, Token.LEFT_PARENTHESIS)) {
+            asignarError(i, "(");
             return false;
         }
-        if (!listaParametrosLlamada(++i)) {
-            if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
-                return false;
-            }
-            siguienteIndice = i;
-        }
+
+        listaParametrosLlamada(++i);
+
         i = siguienteIndice;
-        System.out.println("Y " + tokens.get(i));
+
         if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            asignarError(i, ")");
             return false;
         }
         siguienteIndice = i + 1;
@@ -191,8 +204,11 @@ public class AnalizadorSintactico {
     private boolean listaParametrosLlamada(int i) {
         if (operacionAritmetica(i)) {
             i = siguienteIndice - 1;
-        } else if (!literal(i) && !evaluar(i, Token.IDENTIFIER)) {
-            return false;
+        } else {
+            if (!literal(i) && !evaluar(i, Token.IDENTIFIER)) {
+                asignarError(i, "literal o identificador");
+                return false;
+            }
         }
         if (evaluar(++i, Token.COMMA)) {
             return listaParametrosLlamada(++i);
@@ -217,75 +233,114 @@ public class AnalizadorSintactico {
         if (operacionAritmetica(i)) {
             i = siguienteIndice;
             if (!evaluar(i, Token.SEMICOLON)) {
+                asignarError(i, ";");
                 return false;
             }
             siguienteIndice = i + 1;
             return true;
         }
-        if (literal(i) || evaluar(i, Token.IDENTIFIER)) {
-            if (!evaluar(++i, Token.SEMICOLON)) {
-                return false;
-            }
-            siguienteIndice = i + 1;
-            return true;
+        if (!literal(i) && !evaluar(i, Token.IDENTIFIER)) {
+            return false;
         }
-        return false;
+        if (!evaluar(++i, Token.SEMICOLON)) {
+            asignarError(i, ";");
+            return false;
+        }
+        siguienteIndice = i + 1;
+        return true;
     }
 
-    private boolean listaParametros(int i) {
+    private boolean listaParametros(int i, boolean primero) {
+        if (primero && evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            siguienteIndice = i;
+            return true;
+        }
+
         if (!parametro(i)) {
             return false;
         }
         i = siguienteIndice;
+
         if (evaluar(i, Token.COMMA)) {
-            return listaParametros(++i);
+            return listaParametros(++i, false);
         }
+
+        if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            asignarError(i, ")");
+            return false;
+        }
+
         return true;
     }
 
     private boolean parametro(int i) {
         siguienteIndice = i + 2;
-        return tipoDato(i) && evaluar(++i, Token.IDENTIFIER);
+        if (!tipoDato(i)) {
+            asignarError(i, "tipo de dato");
+            return false;
+        }
+
+        if (!evaluar(++i, Token.IDENTIFIER)) {
+            asignarError(i, "identificador");
+            return false;
+        }
+
+        return true;
     }
 
-    public boolean declaracionVariable(int i){
-        if(evaluar(i, Token.FINAL)){
+
+    public boolean declaracionVariable(int i) {
+        System.out.println("TILIN");
+        if (evaluar(i, Token.FINAL)) {
             i++;
         }
 
-        if(!tipoDato(i)){
+        if (!tipoDato(i)) {
+            asignarError(i, "tipo de dato");
             return false;
         }
 
-        if (!evaluar(++i, Token.IDENTIFIER)){
+        if (!evaluar(++i, Token.IDENTIFIER)) {
+            asignarError(i, "identificador");
             return false;
         }
 
-        if (asignacionValorVariables(i)) {
+        if (asignacionValorVariables(i, true)) {
             i = siguienteIndice;
         } else {
             i++;
         }
 
+        if (!evaluar(i, Token.SEMICOLON)) {
+            asignarError(i, ";");
+            return false;
+        }
         siguienteIndice = i + 1;
-        return evaluar(i, Token.SEMICOLON);
+        return true;
     }
 
-    public boolean asignacionValorVariables(int i){
+    public boolean asignacionValorVariables(int i, boolean primero){
         if (!evaluar(i, Token.IDENTIFIER)){
+            if (!primero) {
+                asignarError(i, "identificador");
+            }
             return false;
         }
+
         if(!operadorAsignacion(++i)){
+            asignarError(i, "operador de asignacion");
             return false;
         }
+
         if (!llamadaMetodo(++i) && !operacionAritmetica(i) && !concatenacionStrings(i)) {
             return false;
         }
         i = siguienteIndice;
+
         if (!evaluar(i, Token.COMMA)) {
             return true;
         }
-        return asignacionValorVariables(++i);
+        return asignacionValorVariables(++i, false);
     }
 
     private boolean estructuraCondicional(int i) {
@@ -296,7 +351,9 @@ public class AnalizadorSintactico {
         if(!evaluar(i, Token.IF)){
             return false;
         }
+
         if(!evaluar(++i, Token.LEFT_PARENTHESIS)){
+            asignarError(i, "(");
             return false;
         }
 
@@ -306,10 +363,12 @@ public class AnalizadorSintactico {
 
         i = siguienteIndice;
         if(!evaluar(i, Token.RIGHT_PARENTHESIS)){
+            asignarError(i, ")");
             return false;
         }
 
         if(!evaluar(++i, Token.LEFT_CURLY_BRACE)){
+            asignarError(i,"{");
             return false;
         }
 
@@ -319,24 +378,26 @@ public class AnalizadorSintactico {
         i = siguienteIndice;
         System.out.println(tokens.get(i));
         if(!evaluar(i, Token.RIGHT_CURLY_BRACE)){
+            asignarError(i, "}");
             return false;
         }
         if(!evaluar(++i, Token.ELSE)){
             siguienteIndice = i;
             return true;
         }
-        if (evaluar(++i, Token.LEFT_CURLY_BRACE)) {
-            if (!listaInstrucciones(++i)) {
-                return false;
-            }
-            i = siguienteIndice;
-            if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
-                return false;
-            }
-            siguienteIndice++;
-            return true;
+        if (!evaluar(++i, Token.LEFT_CURLY_BRACE)) {
+            return declaracionIf(i);
         }
-        return declaracionIf(i);
+        if (!listaInstrucciones(++i)) {
+            return false;
+        }
+        i = siguienteIndice;
+        if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+            asignarError(i, "}");
+            return false;
+        }
+        siguienteIndice++;
+        return true;
     }
 
     private boolean estructuraRepetitiva(int i) {
@@ -353,7 +414,6 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        System.out.println("JOSE LUIS " + tokens.get(i));
 
         if (evaluar(i, Token.SEMICOLON)) {
             siguienteIndice = i;
@@ -361,23 +421,36 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        System.out.println("MARIO BASTIDAS " + tokens.get(i));
+
         if (!evaluar(i, Token.SEMICOLON)){
+            asignarError(i, ";");
             return false;
         }
+
         if (evaluar(++i, Token.RIGHT_PARENTHESIS)) {
             siguienteIndice = i;
-        }  else if (!asignacionValorVariables(i)) {
+        }  else if (!asignacionValorVariables(i, true)) {
             return false;
         }
         i = siguienteIndice;
-        System.out.println("CLEMENTE GARCIA " + tokens.get(i));
-        if (!evaluar(i, Token.RIGHT_PARENTHESIS) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
+
+        if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            asignarError(i, ")");
+            return false;
+        }
+
+        if (!evaluar(++i, Token.LEFT_CURLY_BRACE)) {
+            asignarError(i, "{");
+            return false;
+        }
+
+        if (!listaInstrucciones(++i)) {
             return false;
         }
         i = siguienteIndice;
-        System.out.println("MARTHA ESTELA " + tokens.get(i));
+
         if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+            asignarError(i, "}");
             return false;
         }
         siguienteIndice = i + 1;
@@ -409,15 +482,32 @@ public class AnalizadorSintactico {
     }
 
     private boolean declaracionDoWhile(int i){
-        if (!evaluar(i, Token.DO) || !evaluar(++i, Token.LEFT_CURLY_BRACE) || !listaInstrucciones(++i)) {
+        if (!evaluar(i, Token.DO)) {
             return false;
         }
+
+        if (!evaluar(++i, Token.LEFT_CURLY_BRACE)) {
+            asignarError(i, "{");
+            return false;
+        }
+
+        if (!listaInstrucciones(++i)){
+            return false;
+        }
+
         i = siguienteIndice;
-        if (!evaluar(i, Token.RIGHT_CURLY_BRACE) || !parteWhile(++i)) {
+        if (!evaluar(i, Token.RIGHT_CURLY_BRACE)) {
+            asignarError(i, "}");
             return false;
         }
+
+        if (!parteWhile(++i)) {
+            return false;
+        }
+
         i = siguienteIndice;
         if (!evaluar(i, Token.SEMICOLON)) {
+            asignarError(i, ";");
             return false;
         }
         siguienteIndice = i + 1;
@@ -425,11 +515,22 @@ public class AnalizadorSintactico {
     }
 
     private boolean parteWhile(int i) {
-        if (!evaluar(i, Token.WHILE) || !evaluar(++i, Token.LEFT_PARENTHESIS) || !listaCondiciones(++i)) {
+        if (!evaluar(i, Token.WHILE)) {
             return false;
         }
+
+        if (!evaluar(++i, Token.LEFT_PARENTHESIS)) {
+            asignarError(i, "(");
+            return false;
+        }
+
+        if (!listaCondiciones(++i)) {
+            return false;
+        }
+
         i = siguienteIndice;
         if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            asignarError(i, ")");
             return false;
         }
         siguienteIndice = i + 1;
@@ -456,6 +557,7 @@ public class AnalizadorSintactico {
             i++;
         }
         if (!evaluar(i, Token.LEFT_PARENTHESIS)) {
+            asignarError(i, "(");
             return false;
         }
         if (!condicion(++i)) {
@@ -463,6 +565,7 @@ public class AnalizadorSintactico {
         }
         i = siguienteIndice;
         if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+            asignarError(i, ")");
             return false;
         }
         siguienteIndice = i + 1;
@@ -477,11 +580,13 @@ public class AnalizadorSintactico {
             siguienteIndice = i + 1;
             return true;
         }
+        asignarError(i, "valor");
         return false;
     }
 
     private boolean concatenacionStrings(int i) {
         if (!stringValue(i) && !evaluar(i, Token.IDENTIFIER)) {
+            asignarError(i, "cadena");
             return false;
         }
         if (!evaluar(++i, Token.PLUS)) {
@@ -498,15 +603,18 @@ public class AnalizadorSintactico {
             }
             i = siguienteIndice;
             if (!evaluar(i, Token.RIGHT_PARENTHESIS)) {
+                asignarError(i, ")");
                 return false;
             }
             if (!operadorAritmetico(++i)) {
+                asignarError(i, "operador aritmetico");
                 siguienteIndice = i;
                 return true;
             }
             return operacionAritmetica(++i);
         }
         if (!valorOperacion(i)) {
+            asignarError(i, "valor");
             return false;
         }
         if (!operadorAritmetico(++i)) {
@@ -546,6 +654,10 @@ public class AnalizadorSintactico {
         return evaluar(i, Token.VOID) || tipoDato(i);
     }
 
+    private boolean modificadorAcceso(int i) {
+        return evaluar(i, Token.PUBLIC) || evaluar(i, Token.PRIVATE) || evaluar(i, Token.PROTECTED);
+    }
+
     public boolean operadorAritmetico(int i){
         return evaluar(i, Token.PLUS) || evaluar(i, Token.MINUS) || evaluar(i, Token.TIMES) || evaluar(i, Token.DIVIDE)  || evaluar(i, Token.MODULO);
     }
@@ -576,16 +688,11 @@ public class AnalizadorSintactico {
         return i < tokens.size() && tokens.get(i).equals(tokenEsperado);
     }
 
-    private void asignarError(int i, Token tokenEsperado) {
-        if (i < tokens.size()) {
-            //error = "Error en la linea " + posiciones.get(i).getFila() + " y columna " + posiciones.get(i).getColumna() + "\n\t\t";
-            error += "Se esperaba el token " + tokenEsperado + " pero se encontro el token " + tokens.get(i);
-            return;
-        }
-        error = "Se esperaba el token " + tokenEsperado + " pero se encontro el fin del archivo";
+    private void asignarError(int i, String tokenEsperado) {
+        error = new ErrorSintactico(tokenEsperado, i);
     }
 
-    public String getError() {
+    public ErrorSintactico getError() {
         return error;
     }
 }

@@ -36,6 +36,9 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
         setLayout(null);
 
         fileChooser = new JFileChooser();
+        File workingDirectory = new File(System.getProperty("user.dir"));
+        fileChooser.setCurrentDirectory(workingDirectory);
+
         makeInterface();
         addListeners();
         idBotonActual = -1;
@@ -258,7 +261,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
                 txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado correctamente");
             }else {
                 lblSintacticoStatus.setBackground(Color.red);
-                txtConsole.setText(analizadorSintactico.getError());
+                txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado con error:" + "\n" + analizadorSintactico.getError().getMensajeError(analizadorLexico.getPares()));
                 btnSintactico.setEnabled(false);
             }
         }

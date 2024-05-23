@@ -235,7 +235,6 @@ public class AnalizadorLexico {
                         tablaSimbolos.put(claseVariable, new Simbolo(Token.VARIABLE, tokens.get(i - 1)));
                         jerarquiaSimbolos.get(claseActual).add(claseVariable);
                     }
-                    continue;
                 }
             }
         }
@@ -334,8 +333,8 @@ public class AnalizadorLexico {
         for (int i = 0; i < pares.size(); i++) {
             sb.append(cadenas.get(i)).append(" ");
             sb.append(pares.get(i).getToken()).append(" ");
-            sb.append(pares.get(i).getDireccion().getFila()).append(" ");
-            sb.append(pares.get(i).getDireccion().getColumna()).append(" ");
+            sb.append(pares.get(i).getPosicion().getFila()).append(" ");
+            sb.append(pares.get(i).getPosicion().getColumna()).append(" ");
             sb.append("\n");
         }
         return sb.toString();
@@ -343,7 +342,7 @@ public class AnalizadorLexico {
 
     private void guardarToken(Token token, int fila, int columna) {
         tokens.add(token);
-        pares.add(new Par(tokens.getLast(), new Posicion(fila, columna)));
+        pares.add(new Par(token, new Posicion(fila, columna)));
     }
 
     public String obtenerStringTablaSimbolos() {
