@@ -211,7 +211,7 @@ public class AnalizadorLexico {
                     entreParentesis = false;
                 }
             }
-            if (esIdentificador(tokens.get(i).toString())) {
+            if (esIdentificador(tokens.get(i).toString()) && !mapaTokens.containsKey(cadenas.get(i))) {
                 if (i - 1 >= 0 && tokens.get(i - 1) == Token.CLASS) {
                     claseActual = cadenas.get(i);
                     clases.add(claseActual);

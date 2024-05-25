@@ -9,11 +9,15 @@ public class ErrorSintactico {
         this.indiceTokenEsperado = indiceTokenEsperado;
     }
 
-    public String getMensajeError(ArrayList<Par> tokens) {
+    public String getMensajeError(ArrayList<Par> tokens, String codigo) {
         String error;
+        Posicion posicion = tokens.get(indiceTokenEsperado).getPosicion();
         if (indiceTokenEsperado < tokens.size()) {
-            error = "Error en la linea " + (tokens.get(indiceTokenEsperado).getPosicion().getFila());
-            error += " y columna " + (tokens.get(indiceTokenEsperado).getPosicion().getColumna()) + "\n\t";
+            error = "Error en la linea " + posicion.getFila();
+            error += " y columna " + posicion.getColumna() + "\n";
+            error += codigo.split("\n")[posicion.getFila() - 1] + "\n";
+            error += " ".repeat(posicion.getColumna() - 1) + "^\n";
+            error += " ".repeat(posicion.getColumna() - 1) + "Error\n";
             error += "Se esperaba un " + tokenEsperado + " pero se encontro " + tokens.get(indiceTokenEsperado).getToken();
             return error;
         }

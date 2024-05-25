@@ -263,7 +263,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
                 txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado correctamente");
             }else {
                 lblSintacticoStatus.setBackground(Color.red);
-                txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado con error:\n" + analizadorSintactico.getError().getMensajeError(analizadorLexico.getPares()));
+                txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado con error:\n" + analizadorSintactico.getError().getMensajeError(analizadorLexico.getPares(), txtCode.getText()));
                 btnSintactico.setEnabled(false);
             }
         }
