@@ -64,7 +64,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
         txtCode.setBounds(50, 50, 750, 540);
         txtCode.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         Color fontColor = txtCode.getForeground();
-        txtCode.setFont(new Font("Arial", Font.PLAIN, 17));
+        txtCode.setFont(new Font("Courier New", Font.PLAIN, 17));
         txtCode.setTabSize(4);
 
         txtLineCount = new JTextArea("  " + intLineCount + "   ");
@@ -148,7 +148,8 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
         txtConsole.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         txtConsole.setEnabled(false);
         txtConsole.setDisabledTextColor(fontColor);
-        txtConsole.setFont(new Font("Arial", Font.PLAIN, 17));
+        txtConsole.setFont(new Font("Courier New", Font.PLAIN, 17));
+        txtConsole.setTabSize(4);
 
         JScrollPane scrollConsole = new JScrollPane(txtConsole);
         scrollConsole.setBounds(10, 50, 780, 240);
@@ -222,7 +223,6 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
             int option = fileChooser.showOpenDialog(this);
             if(option == JFileChooser.APPROVE_OPTION){
                 File file = fileChooser.getSelectedFile();
-                System.out.println(file.getAbsolutePath());
                 try {
                     String code = FileReader.readFile(file);
                     txtCode.setText(code);
@@ -247,7 +247,9 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
                 btnSintactico.setEnabled(true);
             }else {
                 lblLexicoStatus.setBackground(Color.red);
-                txtConsole.setText("Ocurrio algun error en el analisis lexico");
+                StringBuilder textoConsola = new StringBuilder("Analisis lexico finalizado con error:\n");
+                textoConsola.append(analizadorLexico.obtenerErrores(txtCode.getText()));
+                txtConsole.setText(textoConsola.toString());
             }
             revalidate();
             repaint();
@@ -261,7 +263,7 @@ public class Interface extends JFrame implements ActionListener, KeyListener, Do
                 txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado correctamente");
             }else {
                 lblSintacticoStatus.setBackground(Color.red);
-                txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado con error:" + "\n" + analizadorSintactico.getError().getMensajeError(analizadorLexico.getPares()));
+                txtConsole.setText(txtConsole.getText() + "\n" + "Analisis sintactico finalizado con error:\n" + analizadorSintactico.getError().getMensajeError(analizadorLexico.getPares()));
                 btnSintactico.setEnabled(false);
             }
         }

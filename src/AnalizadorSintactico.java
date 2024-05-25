@@ -2,7 +2,6 @@ import java.util.ArrayList;
 
 public class AnalizadorSintactico {
     private ArrayList<Token> tokens;
-    private ArrayList<Posicion> posiciones;
     private int siguienteIndice;
     private ErrorSintactico error;
 
@@ -34,7 +33,6 @@ public class AnalizadorSintactico {
         }
         if (!evaluar(++i, Token.IDENTIFIER)) {
             asignarError(i, "identificador");
-            System.out.println();
             return false;
         }
 
@@ -290,7 +288,6 @@ public class AnalizadorSintactico {
 
 
     public boolean declaracionVariable(int i) {
-        System.out.println("TILIN");
         if (evaluar(i, Token.FINAL)) {
             i++;
         }
@@ -376,7 +373,6 @@ public class AnalizadorSintactico {
             return false;
         }
         i = siguienteIndice;
-        System.out.println(tokens.get(i));
         if(!evaluar(i, Token.RIGHT_CURLY_BRACE)){
             asignarError(i, "}");
             return false;

@@ -5,7 +5,7 @@ public class AnalizadorLexico {
     private final HashMap<String, Simbolo> tablaSimbolos;
     private final HashMap<String, ArrayList<String>> jerarquiaSimbolos;
     private ArrayList<Token> tokens;
-    private ArrayList<Par> pares;
+    private ArrayList<Par> pares, errores;
     private ArrayList<String> clases, cadenas;
 
     public AnalizadorLexico() {
@@ -111,7 +111,7 @@ public class AnalizadorLexico {
         boolean comillasAbiertas = false;
 
         for (int i = 0; i < codigo.length(); i++) {
-            columnaActual++;
+            columnaActual += codigo.charAt(i) == '\t' ? 4 : 1;
             int tipoCaracterDeSeparacion = esCaracterDeSeparacion(codigo.charAt(i));
 
             if (codigo.charAt(i) == '"') {
@@ -167,6 +167,12 @@ public class AnalizadorLexico {
 
             cadenas.add(token);
 
+            if (!tokenValido) {
+                guardarToken(Token.ERROR, filaActual, columnaActual - token.length());
+                // cadenas.add(sb.toString());
+                sb = new StringBuilder();
+            }
+
             if (tipoCaracterDeSeparacion >= 1) {
                 String tokenO = "" + codigo.charAt(i);
                 boolean agregado = esOperadorCompuesto(codigo, i, tipoCaracterDeSeparacion);
@@ -182,10 +188,7 @@ public class AnalizadorLexico {
                 sb = new StringBuilder();
                 continue;
             }
-
-            guardarToken(Token.ERROR, filaActual, columnaActual - token.length());
-            cadenas.add(sb.toString());
-            sb = new StringBuilder();
+            // comillasAbiertas = false;
         }
 
         generarTablaDeSimbolos(cadenas);
@@ -238,6 +241,21 @@ public class AnalizadorLexico {
                 }
             }
         }
+    }
+
+    public String obtenerErrores(String codigo) {
+        String[] lineas = codigo.split("\n");
+        StringBuilder sb = new StringBuilder();
+        for (Par par : pares) {
+            if (par.getToken() != Token.ERROR) {
+                continue;
+            }
+            sb.append("Error en la linea ").append(par.getPosicion().getFila()).append(" y columna ").append(par.getPosicion().getColumna()).append("\n");
+            sb.append(lineas[par.getPosicion().getFila() - 1]).append("\n");
+            sb.append(" ".repeat(par.getPosicion().getColumna() - 1)).append("^").append("\n");
+            sb.append(" ".repeat(par.getPosicion().getColumna() - 1)).append("Error").append("\n\n");
+        }
+        return sb.toString();
     }
 
     private String obtenerStringJerarquia(String cadena, int nivel) {
