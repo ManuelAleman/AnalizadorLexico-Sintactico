@@ -197,6 +197,7 @@ public class AnalizadorLexico {
     private void generarTablaDeSimbolos(ArrayList<String> cadenas) {
         tablaSimbolos.clear();
         jerarquiaSimbolos.clear();
+        jerarquiaSimbolos.put("", new ArrayList<>());
         String claseActual = "", metodoActual = "", claseMetodo = "";
         clases = new ArrayList<>();
         boolean enMetodo = false, entreParentesis = false;
